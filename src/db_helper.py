@@ -1,68 +1,93 @@
 import sqlite3
 
 class DbHelper:
+
     def __init__(self):
-        self.db_name = 'category.db'
+        self.db_name = 'my_data.db'
         self.conn = sqlite3.connect(self.db_name, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
         self.setup()
-        self.intial_product()
-        #self.insert_data()
-
+        # self.intial_product()
+        # self.intial_data()
 
     def setup(self):
+        self.conn.execute(""" CREATE TABLE IF NOT EXISTS tg_user(
+          id INTEGER PRIMARY KEY UNIQUE,
+          username TEXT DEFAULT NULL,
+          first_name TEXT NOT NULL,
+          birth_year INTEGER,
+          full_name TEXT
+        )""")
+
         self.conn.execute("""CREATE TABLE IF NOT EXISTS category(
-                             id INTEGER PRIMARY KEY UNIQUE,
-                             name TEXT NOT NULL,
-                             parent_id INTEGER
-                        )""")
+            id INTEGER PRIMARY KEY UNIQUE,
+            name TEXT NOT NULL,
+            parent_id INTEGER
+        )""")
+
         self.conn.execute("""CREATE TABLE IF NOT EXISTS product(
-                             id INTEGER PRIMARY KEY UNIQUE,
-                             name TEXT,
-                             amount INTEGER,
-                             file_path TEXT,
-                             category_id INTEGER
-                                )""")
+                id INTEGER NOT NULL PRIMARY KEY UNIQUE,
+                name TEXT,
+                amount INTEGER,
+                file_path TEXT,
+                category_id INTEGER
+        )""")
+
         self.conn.commit()
-    def getproductByCategory_id(self, id):
-        return self.conn.execute('SELECT * FROM product where category_id=?', [id]).fetchone()
+
     def getCategories(self):
-        return self.conn.execute('SELECT * FROM category where parent_id is null limit 20').fetchall()
+        return self.conn.execute('SELECT * FROM category where parent_id is null limit 20').fetchall();
 
-    def getParentId(self, parent_id):
-        return self.conn.execute('SELECT * FROM category where parent_id=?', [parent_id]).fetchall()
-    def insert_data(self):
+    def getCategorychilds(self, parent_id):
+        return self.conn.execute('SELECT * FROM category where parent_id =? limit 20', [parent_id]).fetchall();
+
+
+    def getproductByCategory_id(self, id):
+        return self.conn.execute('SELECT * FROM product where category_id=?', [id]).fetchone();
+
+    def getproductById(self, id):
+        return self.conn.execute('SELECT * FROM product where id=?', [id]).fetchone();
+
+    def getUserById(self, id):
+        return self.conn.execute('SELECT * FROM tg_user where id=?', [id]).fetchone();
+
+    def createUser(self, id, username, first_name):
+        self.conn.execute("""
+        INSERT INTO tg_user(id, username, first_name)
+        VALUES(?, ?, ?)
+        """, (id, username, first_name))
+        self.conn.commit()
+
+
+    def intial_data(self):
         categories = [
-            (1, 'Lavash', None),
-            (2, 'Shaurma', None),
-            (3, 'Donar', None),
-            (4, 'Burger', None),
-            (5, 'Hod-dog', None),
-            (6, 'Ichimliklar', None),
-            (7, 'Desertlar', None),
-            (8, 'Говяжий лаваш', 1),
-            (9, 'Говяжий лаваш с сыром', 1),
-            (10, 'Мини', 8),
-            (11, 'Классический', 8),
-            (12, 'Мини', 9),
-            (13, 'Классический', 9)
-            ]
-
+            (1, '🌯 Лаваш', None),
+            (2, '🌮 Шаурма', None),
+            (3, '🍲 Донар', None),
+            (4, '🍔 Бургер', None),
+            (5, '🌭 Хот-дог', None),
+            (6, '🍰 Десерты', None),
+            (7, '☕️ Напитки', None),
+            (8, '🍟 Гарнир', None),
+            (9, 'Говяжиний лаваш', 1),
+            (10, 'Говяжиний лаваш с сыром', 1),
+            (11, 'Мини', 9),
+            (12, 'Классичиский', 9),
+            (13, 'Мини', 10),
+            (14, 'Классичиский', 10),
+        ]
         self.conn.executemany("""
-             INSERT INTO category(id, name, parent_id) VALUES(?, ?, ?)""",
-             categories
+            INSERT INTO category(id, name, parent_id) VALUES(?, ?, ?)""",
+            categories
         )
         self.conn.commit()
 
 
-
     def intial_product(self):
         products = [
-            (1, 'Говяжиний Мини Лаваш', 15000, 'lavash_little.jpg', 10),
-            (2, 'Говяжиний Классичиский Лаваш', 17000, 'lavash_big.jpg', 11),
-            (3, 'Говяжий лаваш с сыром Классичиский Лаваш', 'lavash_big.jpg', 13),
-            (4, 'Говяжий лаваш с сыром Мини Лаваш', 'lavash_little.jpg', 12)
+            (1, 'Говяжиний Мини Лаваш', 17000, 'lavash_1.jpg', 11),
+            (2, 'Говяжиний Классичиский Лаваш', 17000, 'lavash_2.jpg', 12)
         ]
         self.conn.executemany("""
             INSERT INTO product(id, name, amount, file_path, category_id) VALUES(?, ?, ?, ?, ?)""",
